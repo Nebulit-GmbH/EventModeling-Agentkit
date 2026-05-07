@@ -42,8 +42,8 @@ while true; do
       break
     else
       echo
-      echo "Claude exited with an error. Waiting 5 minutes before retry..."
-      sleep 300
+      echo "Claude exited with an error. Waiting 1 minutes before retry..."
+      sleep 60
     fi
   done
 
