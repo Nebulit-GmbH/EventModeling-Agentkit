@@ -27,17 +27,10 @@ echo "Starting agent loop — project: $PROJECT_DIR"
 # Main loop — runs indefinitely
 # ------------------------------------------------------------
 while true; do
-  echo
+  clear
   echo "═══════════════════════════════════════════════════════"
   echo "  Agent tick — $(date)"
   echo "═══════════════════════════════════════════════════════"
-
-  # Skip if no tasks file yet or array is empty
-  if [[ ! -f "$TASKS_FILE" ]] || [[ "$(cat "$TASKS_FILE" | tr -d '[:space:]')" == "[]" ]]; then
-    echo "No pending tasks — waiting..."
-    sleep 2
-    continue
-  fi
 
   TMP_OUTPUT=$(mktemp)
 
