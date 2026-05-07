@@ -70,16 +70,6 @@ async function fetchNextPrompt(cfg: PlatformConfig, jwtToken: string): Promise<P
   return res.json() as Promise<Prompt>;
 }
 
-async function acknowledgePrompt(cfg: PlatformConfig, id: string, jwtToken: string): Promise<void> {
-  const res = await fetch(`${cfg.baseUrl}/api/prompts/${id}`, {
-    method: 'DELETE',
-    headers: { 'x-token': cfg.token, 'Authorization': `Bearer ${jwtToken}` },
-  });
-  if (res.status !== 204 && res.status !== 404) {
-    throw new Error(`Failed to acknowledge prompt ${id}: ${res.status} / ${res.statusText} / ${await res.text()}`);
-  }
-}
-
 async function processPrompt(prompt: Prompt, cfg: PlatformConfig, jwtToken: string, claudeCwd: string): Promise<void> {
   console.log(`[agent] Processing prompt "${prompt.prompt}" (board=${prompt.board_id}, priority=${prompt.priority})`);
 
@@ -99,7 +89,6 @@ async function drainQueue(cfg: PlatformConfig, jwtToken: string, claudeCwd: stri
   while ((prompt = await fetchNextPrompt(cfg, jwtToken)) !== null) {
     try {
       await processPrompt(prompt, cfg, jwtToken, claudeCwd);
-      await acknowledgePrompt(cfg, prompt.id, jwtToken);
     } catch (err) {
       console.error(`[agent] Error processing prompt ${prompt.id}:`, err);
       break;

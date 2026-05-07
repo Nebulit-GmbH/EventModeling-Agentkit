@@ -1,6 +1,17 @@
 import { spawn } from 'child_process';
 
-export async function callAgent(prompt: string, cwd: string): Promise<void> {
+interface AgentCallOptions {
+  boardId: string;
+  timelineId: string;
+  organizationId: string;
+  token: string;
+  baseUrl: string;
+  prompt: string;
+  cwd: string;
+}
+
+export async function callAgent(options: AgentCallOptions): Promise<void> {
+  const { prompt, cwd } = options;
   await new Promise<void>((resolve, reject) => {
     const proc = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
       cwd,
