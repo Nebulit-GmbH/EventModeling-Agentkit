@@ -1,31 +1,38 @@
-import { spawn } from 'child_process';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
+import { randomUUID } from 'crypto';
 
-interface AgentCallOptions {
-  boardId: string;
-  timelineId: string;
-  organizationId: string;
-  token: string;
-  baseUrl: string;
+export interface Prompt {
+  id: string;
   prompt: string;
-  cwd: string;
+  board_id: string;
+  timeline_id: string;
+  organization_id: string;
+  user_id: string;
+  creation_time: string;
+  priority: boolean;
 }
 
-export async function callAgent(options: AgentCallOptions): Promise<void> {
-  const { prompt, cwd } = options;
-  await new Promise<void>((resolve, reject) => {
-    const proc = spawn('claude', ['-p', prompt, '--dangerously-skip-permissions'], {
-      cwd,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+interface Task {
+  id: string;
+  createdAt: string;
+  prompts: Prompt[];
+}
 
-    proc.stdout.on('data', (data) => process.stdout.write(`[claude] ${data}`));
-    proc.stderr.on('data', (data) => process.stderr.write(`[claude] ${data}`));
+export async function writeTask(prompts: Prompt[], cwd: string): Promise<void> {
+  const tasksPath = resolve(cwd, 'tasks.json');
 
-    proc.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`claude exited with code ${code}`));
-    });
+  const existing: Task[] = existsSync(tasksPath)
+    ? (JSON.parse(readFileSync(tasksPath, 'utf-8')) as Task[])
+    : [];
 
-    proc.on('error', reject);
-  });
+  const task: Task = {
+    id: randomUUID(),
+    createdAt: new Date().toISOString(),
+    prompts,
+  };
+
+  existing.push(task);
+  writeFileSync(tasksPath, JSON.stringify(existing, null, 2), 'utf-8');
+  console.log(`[agent] Task ${task.id} written with ${prompts.length} prompt(s)`);
 }

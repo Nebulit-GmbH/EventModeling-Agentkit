@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { callAgent } from './agentCall.js';
+import { writeTask, Prompt } from './agentCall.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -15,17 +15,6 @@ interface LocalConfig {
 interface PlatformConfig extends LocalConfig {
   supabaseUrl: string;
   supabaseAnonKey: string;
-}
-
-interface Prompt {
-  id: string;
-  prompt: string;
-  board_id: string;
-  timeline_id: string;
-  organization_id: string;
-  user_id: string;
-  creation_time: string;
-  priority: boolean;
 }
 
 function loadLocalConfig(): LocalConfig {
@@ -70,29 +59,17 @@ async function fetchNextPrompt(cfg: PlatformConfig, jwtToken: string): Promise<P
   return res.json() as Promise<Prompt>;
 }
 
-async function processPrompt(prompt: Prompt, cfg: PlatformConfig, jwtToken: string, claudeCwd: string): Promise<void> {
-  console.log(`[agent] Processing prompt "${prompt.prompt}" (board=${prompt.board_id}, priority=${prompt.priority})`);
-
-  await callAgent({
-    boardId: prompt.board_id,
-    timelineId: prompt.timeline_id,
-    organizationId: prompt.organization_id,
-    token: cfg.token,
-    baseUrl: cfg.baseUrl,
-    prompt: prompt.prompt,
-    cwd: claudeCwd,
-  });
-}
-
 async function drainQueue(cfg: PlatformConfig, jwtToken: string, claudeCwd: string): Promise<void> {
+  const prompts: Prompt[] = [];
   let prompt: Prompt | null;
+
   while ((prompt = await fetchNextPrompt(cfg, jwtToken)) !== null) {
-    try {
-      await processPrompt(prompt, cfg, jwtToken, claudeCwd);
-    } catch (err) {
-      console.error(`[agent] Error processing prompt ${prompt.id}:`, err);
-      break;
-    }
+    console.log(`[agent] Queuing prompt "${prompt.prompt}" (board=${prompt.board_id}, priority=${prompt.priority})`);
+    prompts.push(prompt);
+  }
+
+  if (prompts.length > 0) {
+    await writeTask(prompts, claudeCwd);
   }
 }
 

@@ -136,11 +136,13 @@ program
     }
 
     console.log('\n✅ Done!\n');
-    console.log('Next steps:');
-    console.log('  1. Start the real-time agent:');
-    console.log('       cd realtime-agent && npm run dev');
-    console.log('  2. Open Claude Code in this directory — skills are ready in .claude/skills/');
-    console.log('  3. Use /connect to set a board ID, then /timeline, /wdyt, /storyboard, etc.');
+    console.log('Next steps — run both in separate terminals:\n');
+    console.log('  Terminal 1 — realtime agent (picks up prompts → writes tasks.json):');
+    console.log('       cd realtime-agent && npm run dev\n');
+    console.log('  Terminal 2 — ralph loop (reads tasks.json → executes via Claude):');
+    console.log('       ./realtime-agent/ralph.sh\n');
+    console.log('Both run indefinitely. The loop waits when tasks.json is empty.');
+    console.log('\nSkills are ready in .claude/skills/ — use /connect to set a board ID.');
   });
 
 program
