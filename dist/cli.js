@@ -29,6 +29,27 @@ program
     const items = readdirSync(templatesSource);
     for (const item of items) {
         const sourcePath = join(templatesSource, item);
+        // templates/root/ contents are spread directly into the project root
+        if (item === 'root' && statSync(sourcePath).isDirectory()) {
+            const rootItems = readdirSync(sourcePath);
+            for (const rootItem of rootItems) {
+                const rootSourcePath = join(sourcePath, rootItem);
+                const rootTargetPath = join(targetDir, rootItem);
+                try {
+                    if (statSync(rootSourcePath).isDirectory()) {
+                        cpSync(rootSourcePath, rootTargetPath, { recursive: true });
+                    }
+                    else {
+                        cpSync(rootSourcePath, rootTargetPath);
+                    }
+                    console.log(`  ✓ Installed ${rootItem}`);
+                }
+                catch (err) {
+                    console.error(`  ❌ Failed to copy ${rootItem}:`, err?.message);
+                }
+            }
+            continue;
+        }
         const targetPath = join(targetDir, item);
         try {
             if (statSync(sourcePath).isDirectory()) {
@@ -111,7 +132,7 @@ program
     console.log('  Terminal 1 — realtime agent (picks up prompts → writes tasks.json):');
     console.log('       cd realtime-agent && npm run dev\n');
     console.log('  Terminal 2 — ralph loop (reads tasks.json → executes via Claude):');
-    console.log('       ./realtime-agent/ralph.sh\n');
+    console.log('       ./ralph.sh\n');
     console.log('Both run indefinitely. The loop waits when tasks.json is empty.');
     console.log('\nSkills are ready in .claude/skills/ — use /connect to set a board ID.');
 });
