@@ -74,7 +74,7 @@ async function drainQueue(cfg: PlatformConfig, jwtToken: string, claudeCwd: stri
 }
 
 async function start(): Promise<void> {
-  const claudeCwd = process.argv[2] ?? process.cwd();
+  const claudeCwd = process.argv[2] ?? resolve(process.cwd(), '..');
 
   const local = loadLocalConfig();
   const cfg = await fetchPlatformConfig(local);
