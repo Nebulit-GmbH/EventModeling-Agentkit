@@ -32,7 +32,7 @@ echo "Using command: $CLAUDE_CMD"
 while true; do
   # ---- Run Claude in the project root --------------------
   while true; do
-    (cd "$PROJECT_DIR" && cat "$PROMPT_FILE" | $CLAUDE_CMD) 2>&1
+    (cd "$PROJECT_DIR" && $CLAUDE_CMD "$(cat "$PROMPT_FILE")") 2>&1
     EXIT_CODE=$?
     if [[ $EXIT_CODE -eq 0 ]]; then
       break
