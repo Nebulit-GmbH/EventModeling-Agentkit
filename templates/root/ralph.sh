@@ -17,6 +17,9 @@ if [[ ! -f "$PROJECT_DIR/.eventmodelers/config.json" ]]; then
   exit 1
 fi
 
+CONFIG_FILE="$PROJECT_DIR/.eventmodelers/config.json"
+SHOW_OUTPUT=$(python3 -c "import json,sys; d=json.load(open('$CONFIG_FILE')); print(str(d.get('showOutput',True)).lower())" 2>/dev/null || echo "true")
+
 if [[ ! -f "$MODEL_FILE" ]]; then
   echo "ERROR: No model.md found in $PROJECT_DIR"
   exit 1
@@ -32,6 +35,7 @@ fi
 
 echo "Starting agent loop — project: $PROJECT_DIR"
 echo "Using command: $CLAUDE_CMD"
+echo "Show LLM output: $SHOW_OUTPUT"
 
 # ------------------------------------------------------------
 # Main loop — runs indefinitely
@@ -46,9 +50,16 @@ while true; do
 
   # ---- Run Claude in the project root --------------------
   while true; do
-    if (cd "$PROJECT_DIR" && cat "$PROMPT_FILE" \
-        | $CLAUDE_CMD) 2>&1 \
-       | tee "$TMP_OUTPUT" | tee -a "$PROGRESS_FILE"; then
+    if [[ "$SHOW_OUTPUT" == "true" ]]; then
+      (cd "$PROJECT_DIR" && cat "$PROMPT_FILE" | $CLAUDE_CMD) 2>&1 \
+        | tee "$TMP_OUTPUT" | tee -a "$PROGRESS_FILE"
+      EXIT_CODE=${PIPESTATUS[0]}
+    else
+      (cd "$PROJECT_DIR" && cat "$PROMPT_FILE" | $CLAUDE_CMD) 2>&1 \
+        | tee "$TMP_OUTPUT" >> "$PROGRESS_FILE"
+      EXIT_CODE=${PIPESTATUS[0]}
+    fi
+    if [[ $EXIT_CODE -eq 0 ]]; then
       break
     else
       echo

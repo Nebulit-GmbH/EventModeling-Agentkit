@@ -97,6 +97,7 @@ program
     let token = '';
     let organizationId = '';
     let baseUrl = '';
+    let showOutput = true;
     try {
         const configPath = join(targetDir, '.eventmodelers', 'config.json');
         let existingConfig = {};
@@ -107,13 +108,20 @@ program
             }
             catch { /* ignore */ }
         }
-        token = (await rl.question(existingConfig.token
-            ? `API token [${existingConfig.token.slice(0, 8)}…]: `
-            : 'API token: ')) || existingConfig.token || '';
-        organizationId = (await rl.question(existingConfig.organizationId
-            ? `Organization ID [${existingConfig.organizationId.slice(0, 8)}…]: `
-            : 'Organization ID: ')) || existingConfig.organizationId || '';
-        baseUrl = (await rl.question(`Base URL [${existingConfig.baseUrl || 'https://api.eventmodelers.de'}]: `)) || existingConfig.baseUrl || 'https://api.eventmodelers.de';
+        const existingToken = existingConfig.token;
+        const existingOrgId = existingConfig.organizationId;
+        const existingBaseUrl = existingConfig.baseUrl;
+        const existingShowOutput = existingConfig.showOutput;
+        token = (await rl.question(existingToken
+            ? `API token [${existingToken.slice(0, 8)}…]: `
+            : 'API token: ')) || existingToken || '';
+        organizationId = (await rl.question(existingOrgId
+            ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
+            : 'Organization ID: ')) || existingOrgId || '';
+        baseUrl = (await rl.question(`Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `)) || existingBaseUrl || 'https://api.eventmodelers.de';
+        const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
+        const showOutputAnswer = (await rl.question(`Show LLM output in terminal (true/false) [${showOutputDefault}]: `)) || String(showOutputDefault);
+        showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
     }
     finally {
         rl.close();
@@ -121,7 +129,7 @@ program
     if (token && organizationId) {
         const configDir = join(targetDir, '.eventmodelers');
         mkdirSync(configDir, { recursive: true });
-        writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, organizationId, baseUrl }, null, 2));
+        writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, organizationId, baseUrl, showOutput }, null, 2));
         console.log('  ✓ Saved .eventmodelers/config.json');
     }
     else {
