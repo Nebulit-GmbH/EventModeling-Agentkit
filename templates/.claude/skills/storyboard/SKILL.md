@@ -89,7 +89,7 @@ Keep all coordinates within bounds: gridX 0–50, gridY 0–40.
 **If `chapterId` was NOT provided** — create a new chapter (exactly once):
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/chapters" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/chapters" \
   -H "Content-Type: application/json" \
   -d '{"position":{"x":0,"y":0}}'
 ```
@@ -101,7 +101,7 @@ Extract `id` from the response → `CHAPTER_ID`.
 ### Step 4 — Fetch chapter state and build empty-column queue
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes/$CHAPTER_ID"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 ```
 
 Parse `meta.timelineData` from the response:
@@ -130,7 +130,7 @@ Only SCREEN nodes are created. COMMAND and EVENT nodes are not created.
 **If the empty-column queue is empty** — add a new column (this does NOT create a new chapter):
 
 ```bash
-curl -s -X POST "$BASE_URL/api/timelines/$CHAPTER_ID/columns" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$CHAPTER_ID/columns" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -138,7 +138,7 @@ curl -s -X POST "$BASE_URL/api/timelines/$CHAPTER_ID/columns" \
 Extract `columnId` from the response. Then re-fetch the chapter to find the new actor cell:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes/$CHAPTER_ID"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 ```
 
 In `meta.timelineData.cells`, find the cell where `colId == columnId` AND `rowId == <actorRowId>` (the actor row ID you recorded in Step 4). That cell's `id` is your `actorCellId`.
@@ -148,7 +148,7 @@ In `meta.timelineData.cells`, find the cell where `colId == columnId` AND `rowId
 Place the SCREEN node into the actor cell — this endpoint routes `node:created` events through `sendNodeEvents`, which creates the node in the DB and stamps the cellId into the chapter grid:
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/events" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/events" \
   -H "Content-Type: application/json" \
   -d '[
     {
@@ -172,7 +172,7 @@ Verify the response is HTTP 200. If it fails, stop and report the error — do n
 Include `semanticDescription` (a short human-readable description of what this screen shows) alongside the `elements` array so the server persists it in the node's metadata for future adjustments:
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/images/$SCREEN_NODE_ID/sketch" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/images/$SCREEN_NODE_ID/sketch" \
   -H "Content-Type: application/json" \
   -d '{"semanticDescription": "<screenTitle — what this screen shows>", "elements": [...]}'
 ```

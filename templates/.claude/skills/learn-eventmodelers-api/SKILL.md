@@ -73,7 +73,7 @@ SLICE_BORDER   // Slice boundary marker
 
 **File**: `src/slices/change/api-boards/routes.ts`
 
-### POST `/api/boards/:boardId/events`
+### POST `/api/org/:orgId/boards/:boardId/events`
 Persist board/timeline row events as an array of mixed event types.
 
 **Request body**: Array of node, comment, edge, or board events  
@@ -88,14 +88,14 @@ List all boards.
 
 ---
 
-### DELETE `/api/boards/:boardId`
+### DELETE `/api/org/:orgId/boards/:boardId`
 Delete a board.
 
 **Response**: `204`
 
 ---
 
-### GET `/api/boards/:boardId/events/search`
+### GET `/api/org/:orgId/boards/:boardId/events/search`
 Search events by node name.
 
 **Query params**: `name` (string)  
@@ -103,21 +103,21 @@ Search events by node name.
 
 ---
 
-### GET `/api/boards/:boardId/events`
+### GET `/api/org/:orgId/boards/:boardId/events`
 Get all board events in sequence.
 
 **Response**: `200` — event array
 
 ---
 
-### GET `/api/boards/:boardId/nodes/:nodeId/comments`
+### GET `/api/org/:orgId/boards/:boardId/nodes/:nodeId/comments`
 Get all comments for a node.
 
 **Response**: `200` — comment array
 
 ---
 
-### POST `/api/boards/:boardId/bucket`
+### POST `/api/org/:orgId/boards/:boardId/bucket`
 Create a Supabase storage bucket for the board.
 
 **Response**: `200` — `{ ok: boolean, bucket: string, alreadyExisted: boolean }`
@@ -128,7 +128,7 @@ Create a Supabase storage bucket for the board.
 
 **File**: `src/slices/change/api-chapters/routes.ts`
 
-### POST `/api/boards/:boardId/chapters`
+### POST `/api/org/:orgId/boards/:boardId/chapters`
 Create a chapter node.
 
 **Request body**: `{ position?: { x: number, y: number } }`  
@@ -136,7 +136,7 @@ Create a chapter node.
 
 ---
 
-### POST `/api/timelines/:timelineId/columns`
+### POST `/api/org/:orgId/boards/:boardId/timelines/:timelineId/columns`
 Add a column to a timeline.
 
 **Request body**: `{ index?: number }` (integer index, optional)  
@@ -144,7 +144,7 @@ Add a column to a timeline.
 
 ---
 
-### DELETE `/api/timelines/:timelineId/columns/:columnId`
+### DELETE `/api/org/:orgId/boards/:boardId/timelines/:timelineId/columns/:columnId`
 Delete a column from a timeline. Removes the column and all its cells. Cannot delete the last column.
 
 **Response**:
@@ -154,7 +154,7 @@ Delete a column from a timeline. Removes the column and all its cells. Cannot de
 
 ---
 
-### POST `/api/timelines/:timelineId/lanes`
+### POST `/api/org/:orgId/boards/:boardId/timelines/:timelineId/lanes`
 Add a lane (row) to a timeline.
 
 **Request body**:
@@ -170,7 +170,7 @@ Add a lane (row) to a timeline.
 
 ---
 
-### POST `/api/timelines/:timelineId/cells/:cellId/drop`
+### POST `/api/org/:orgId/boards/:boardId/timelines/:timelineId/cells/:cellId/drop`
 Drop a node into a timeline cell. Validates placement rules.
 
 **Request body**: `{ nodeId: string, nodeType: ElementType }`
@@ -195,7 +195,7 @@ Drop a node into a timeline cell. Validates placement rules.
 
 All node endpoints require header: `x-user-id`
 
-### POST `/api/boards/:boardId/nodes/events`
+### POST `/api/org/:orgId/boards/:boardId/nodes/events`
 Submit node change events.
 
 **Request body**: `NodeChangeEvent[]`
@@ -243,7 +243,7 @@ interface NodeChangeEvent {
 
 ---
 
-### GET `/api/boards/:boardId/nodes`
+### GET `/api/org/:orgId/boards/:boardId/nodes`
 List all nodes on a board.
 
 **Query params**: `type?: ElementType`  
@@ -251,7 +251,7 @@ List all nodes on a board.
 
 ---
 
-### GET `/api/boards/:boardId/nodes/:nodeId`
+### GET `/api/org/:orgId/boards/:boardId/nodes/:nodeId`
 Get a single node.
 
 **Response**: `200` — node record OR `404`
@@ -262,7 +262,7 @@ Get a single node.
 
 **File**: `src/slices/change/api-images/routes.ts`
 
-### POST `/api/boards/:boardId/images/:imageId`
+### POST `/api/org/:orgId/boards/:boardId/images/:imageId`
 Update a board image.
 
 **Request**: `multipart/form-data` — field `file` (binary)  
@@ -270,7 +270,7 @@ Update a board image.
 
 ---
 
-### POST `/api/boards/:boardId/imagesnapshots/:imageId`
+### POST `/api/org/:orgId/boards/:boardId/imagesnapshots/:imageId`
 Update an image snapshot.
 
 **Request**: `multipart/form-data` — field `file` (binary)  
@@ -278,7 +278,7 @@ Update an image snapshot.
 
 ---
 
-### POST `/api/boards/:boardId/image-nodes/:nodeId`
+### POST `/api/org/:orgId/boards/:boardId/image-nodes/:nodeId`
 Create an image node.
 
 **Request**: `multipart/form-data` — fields: `file`, `chapterId`, `cellName`  
@@ -286,7 +286,7 @@ Create an image node.
 
 ---
 
-### POST `/api/boards/:boardId/images/:imageId/sketch`
+### POST `/api/org/:orgId/boards/:boardId/images/:imageId/sketch`
 Render a sketch description to WebP and upload.
 
 **Request body**:
@@ -300,7 +300,7 @@ Render a sketch description to WebP and upload.
 
 ---
 
-### POST `/api/boards/:boardId/image-nodes/:nodeId/sketch`
+### POST `/api/org/:orgId/boards/:boardId/image-nodes/:nodeId/sketch`
 Create a SCREEN node from a sketch description.
 
 **Request body**:
@@ -320,7 +320,7 @@ Create a SCREEN node from a sketch description.
 
 **File**: `src/slices/change/api-slices/routes.ts`
 
-### POST `/api/timelines/:timelineId/slices`
+### POST `/api/org/:orgId/boards/:boardId/timelines/:timelineId/slices`
 Create a complete slice (1 column + 3 nodes automatically placed).
 
 **Request body**:
@@ -349,7 +349,7 @@ Create a complete slice (1 column + 3 nodes automatically placed).
 
 **File**: `src/slices/change/api-specs/routes.ts`
 
-### POST `/api/boards/:boardId/contexts/:contextName/slices/:sliceName/scenarios`
+### POST `/api/org/:orgId/boards/:boardId/contexts/:contextName/slices/:sliceName/scenarios`
 Append a Given-When-Then scenario to a spec node.
 
 **Request body**:
@@ -379,14 +379,14 @@ Append a Given-When-Then scenario to a spec node.
 
 ---
 
-### GET `/api/boards/:boardId/contexts/:contextName/spec-info`
+### GET `/api/org/:orgId/boards/:boardId/contexts/:contextName/spec-info`
 Get valid elements for a context (by name lookup).
 
 **Response**: `200` — `{ chapterId: string, elements: ElementRecord[] }`
 
 ---
 
-### GET `/api/boards/:boardId/contexts/:contextName/slices/:sliceName/spec-info`
+### GET `/api/org/:orgId/boards/:boardId/contexts/:contextName/slices/:sliceName/spec-info`
 Get valid elements for a specific slice.
 
 **Response**: `200` — `{ chapterId: string, elements: ElementRecord[] }`
@@ -397,7 +397,7 @@ Get valid elements for a specific slice.
 
 **File**: `src/slices/change/config-import/routes.ts`
 
-### POST `/api/boards/:boardId/import-config`
+### POST `/api/org/:orgId/boards/:boardId/import-config`
 Import an EventModelingJson config to populate a board.
 
 **Request**: `multipart/form-data` with field `file` OR `application/json` body:
@@ -421,7 +421,7 @@ Build structured slice data from board state.
 
 ---
 
-### GET `/api/boards/:boardId/slicedata/slices`
+### GET `/api/org/:orgId/boards/:boardId/slicedata/slices`
 List all slices on a board.
 
 **Response**: `200` — `{ slices: Array<{ id: string, title: string, status: string }> }`
@@ -432,14 +432,14 @@ List all slices on a board.
 
 **File**: `src/slices/extensions/routes.ts`
 
-### GET `/api/boards/:boardId/extensions`
+### GET `/api/org/:orgId/boards/:boardId/extensions`
 List extension configs for a board.
 
 **Response**: `200` — extension record array
 
 ---
 
-### PUT `/api/boards/:boardId/extensions/:type`
+### PUT `/api/org/:orgId/boards/:boardId/extensions/:type`
 Enable or disable an extension.
 
 **Request body**: `{ enabled: boolean, config?: object }`  

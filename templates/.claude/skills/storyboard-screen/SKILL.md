@@ -75,7 +75,7 @@ Keep all coordinates within bounds: gridX 0–50, gridY 0–40.
 Include `semanticDescription` (the original natural-language `description` argument) alongside the `elements` array so the server persists it in the node's metadata for future adjustments:
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/images/$NODE_ID/sketch" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/images/$NODE_ID/sketch" \
   -H "Content-Type: application/json" \
   -d '{"semanticDescription": "<description>", "elements": [...]}'
 ```

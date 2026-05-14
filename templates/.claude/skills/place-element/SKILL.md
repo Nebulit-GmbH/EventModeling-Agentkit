@@ -35,7 +35,7 @@ Use `BOARD_ID` and `BASE_URL` from the `connect` skill. If a `boardId` argument 
 If `timelineId` is not provided, discover chapters on the board:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes?type=CHAPTER"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?type=CHAPTER"
 ```
 
 - **Exactly one chapter** → use it automatically, tell the user which one was selected.
@@ -49,7 +49,7 @@ curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes?type=CHAPTER"
 Always fetch the chapter node first to get the current timeline state:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes/$TIMELINE_ID"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$TIMELINE_ID"
 ```
 
 From `meta.timelineData`, read `columns` (ordered array of column objects with `id` and `index`) and `cells`.
@@ -83,7 +83,7 @@ If `position` is a number and no column exists at that index, stop and tell the 
 Only run this when position was omitted (append mode):
 
 ```bash
-curl -s -X POST "$BASE_URL/api/timelines/$TIMELINE_ID/columns" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$TIMELINE_ID/columns" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -106,7 +106,7 @@ Save that cell's `id` as `CELL_ID`.
 **Check if the cell is already occupied**: query nodes in that cell:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes?cellId=$CELL_ID"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?cellId=$CELL_ID"
 ```
 
 If the response contains any nodes, stop and tell the user: "Cell `<CELL_ID>` at column index `<n>` already contains `<existing node titles>`. Choose a different position or confirm overwrite."
@@ -118,7 +118,7 @@ If no matching row or cell is found, stop and report the error — the timeline 
 ## Step 7 — Create the node
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/nodes/events" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
   -H "Content-Type: application/json" \
   -H "x-user-id: place-element-skill" \
   -d '[{
@@ -166,20 +166,20 @@ Full working example placing an EVENT called "Order Placed" at the end of a time
 
 ```bash
 # 1. Add a column (append at end)
-curl -s -X POST "http://localhost:3000/api/timelines/<TIMELINE_ID>/columns" \
+curl -s -X POST "http://localhost:3000/api/org/<ORG_ID>/boards/<BOARD_ID>/timelines/<TIMELINE_ID>/columns" \
   -H "Content-Type: application/json" \
   -d '{}'
 
 # 2. Fetch chapter to find the swimlane cell for the new column
 curl -s -H "x-user-id: place-element-skill" \
-  "http://localhost:3000/api/boards/<BOARD_ID>/nodes/<TIMELINE_ID>"
+  "http://localhost:3000/api/org/<ORG_ID>/boards/<BOARD_ID>/nodes/<TIMELINE_ID>"
 
 # 3. Create the EVENT node
 
 Do not skip the User-ID. 
 
 
-curl -s -X POST "http://localhost:3000/api/boards/<BOARD_ID>/nodes/events" \
+curl -s -X POST "http://localhost:3000/api/org/<ORG_ID>/boards/<BOARD_ID>/nodes/events" \
   -H "Content-Type: application/json" \
   -H "x-user-id: place-element-skill" \
   -d '[{

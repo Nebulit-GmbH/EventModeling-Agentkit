@@ -34,7 +34,7 @@ A chapter and a timeline are the same thing — the terms are interchangeable.
 If `timelineId` is provided, first resolve it to a UUID if a name was given instead:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes?type=CHAPTER"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?type=CHAPTER"
 ```
 
 - If the value looks like a UUID, use it directly as `CHAPTER_ID`.
@@ -44,7 +44,7 @@ curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes?type=CHAPTER"
 Fetch the chapter node to read its grid structure:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes/$CHAPTER_ID"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 ```
 
 From `meta.timelineData`:
@@ -54,7 +54,7 @@ From `meta.timelineData`:
 Then load the existing EVENT nodes:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes?type=EVENT"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes?type=EVENT"
 ```
 
 For each EVENT node, find its cell in `timelineData.cells` where `nodeId === event.id`. That cell's `colId` gives the `columnId`. Order events by their column's position in `timelineData.columns`.
@@ -76,7 +76,7 @@ Tell the user which timeline was loaded and how many events already exist (one l
 If no `timelineId` is provided, **create the chapter immediately** — before any events are known:
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/chapters" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/chapters" \
   -H "Content-Type: application/json" \
   -d '{"position":{"x":0,"y":0}}'
 ```
@@ -135,7 +135,7 @@ Compare against the current `events` state:
 Before placing any new events, fetch the chapter node to get the current grid state:
 
 ```bash
-curl -s "$BASE_URL/api/boards/$BOARD_ID/nodes/$CHAPTER_ID"
+curl -s "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/$CHAPTER_ID"
 ```
 
 From `meta.timelineData`, identify **empty columns**: columns where no cell has a `nodeId` set. Build a pool:
@@ -148,7 +148,7 @@ emptyColumns = [columnId, ...]   // in column order, ready to reuse
 - After all placements, delete any columns still left in the `emptyColumns` pool — they are gaps that should not remain.
 
 ```bash
-curl -s -X DELETE "$BASE_URL/api/timelines/$CHAPTER_ID/columns/<columnId>"
+curl -s -X DELETE "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$CHAPTER_ID/columns/<columnId>"
 ```
 
 Make all necessary API calls for this turn before responding to the user. The board is updated **before** you summarise what changed.
@@ -192,7 +192,7 @@ From the already-fetched `timelineData`, find the swimlane row and then find the
 Then create the EVENT node directly (place-element Steps 6–7):
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/nodes/events" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
   -H "Content-Type: application/json" \
   -H "x-user-id: timeline-skill" \
   -d '[{
@@ -239,7 +239,7 @@ events.splice(index, 0, { index, title: "<EventName>", eventNodeId: "<nodeId>", 
 Use `eventNodeId` from your local state. Send a `node:changed` event:
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/nodes/events" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
   -H "Content-Type: application/json" \
   -H "x-user-id: timeline-skill" \
   -d '[{
@@ -263,7 +263,7 @@ Two steps — delete the node, then delete the column:
 **1. Delete the EVENT node:**
 
 ```bash
-curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/nodes/events" \
+curl -s -X POST "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/nodes/events" \
   -H "Content-Type: application/json" \
   -H "x-user-id: timeline-skill" \
   -d '[{
@@ -278,7 +278,7 @@ curl -s -X POST "$BASE_URL/api/boards/$BOARD_ID/nodes/events" \
 **2. Delete the column** using `columnId` from local state:
 
 ```bash
-curl -s -X DELETE "$BASE_URL/api/timelines/$CHAPTER_ID/columns/<columnId>"
+curl -s -X DELETE "$BASE_URL/api/org/$ORG_ID/boards/$BOARD_ID/timelines/$CHAPTER_ID/columns/<columnId>"
 ```
 
 If `columnId` is not in local state, fetch the chapter node, scan `meta.timelineData.cells` for the cell where `nodeId === eventNodeId`, and use that cell's `colId`.

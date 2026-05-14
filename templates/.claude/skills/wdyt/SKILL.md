@@ -26,13 +26,13 @@ If the user already provided context name in their message, use it directly.
 
 **A. Get all slices:**
 ```
-GET /api/boards/{boardId}/slicedata/slices
+GET /api/org/{orgId}/boards/{boardId}/slicedata/slices
 ```
 This returns `{ slices: [{ id, title, status }] }`.
 
 **B. For each slice, load its full data:**
 ```
-GET /api/boards/{boardId}/slicedata?contextName={contextName}&sliceId={sliceId}
+GET /api/org/{orgId}/boards/{boardId}/slicedata?contextName={contextName}&sliceId={sliceId}
 ```
 Load all slices in parallel. Each response contains the full element graph for that slice: screens, commands, events, read models, specs, scenarios, actors, automations.
 
@@ -101,7 +101,7 @@ For each question you want to ask, post it as a `QUESTION`-type comment on the m
 
 **Endpoint:**
 ```
-POST /api/boards/{boardId}/events
+POST /api/org/{orgId}/boards/{boardId}/events
 ```
 
 **Payload** (send as array, one comment:added event per question):
