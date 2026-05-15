@@ -1,6 +1,6 @@
 {
   "name": "@eventmodelers/agent-kit",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Real-time Claude agent + skill kit for the Eventmodelers platform",
   "type": "module",
   "bin": {
