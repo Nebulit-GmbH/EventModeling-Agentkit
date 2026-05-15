@@ -68,16 +68,18 @@ If all four are present (from any source), skip to **Step 4 — Verify**.
 
 ## Step 2 — Ask for missing values
 
-If after Steps 0 and 1 any required field is still missing, **first ask the user**:
+If after Steps 0 and 1 any required field is still missing, **ask the user one question first**:
 
-> "Do you have an existing config? If yes, paste it here (e.g. `{ "token": "...", "boardId": "...", "organizationId": "...", "baseUrl": "..." }`). If not, I'll ask for each value step by step."
+> "Do you have a config from the eventmodelers accounts page? (yes / no)"
 
-**If the user pastes a config object**, parse it immediately — accept both `orgId` and `organizationId` as the organization field — apply all values, and skip the individual field questions below. Proceed directly to Step 3.
+**If the user answers yes:**
+Stop asking questions. Show this hint and wait for them to paste:
 
-**If the user has no config** (or pastes only a partial one), ask for each still-missing field one at a time, in this order: `token`, then `boardId`, then `orgId`. Wait for the answer before asking the next.
+> "Great — please paste your config from https://app.eventmodelers.de/account here."
 
-Also give a hint — to get all connection values in one click, users can go to the boards section in the account page:
-https://app.eventmodelers.de/account
+When they paste a JSON object, parse it immediately — accept both `orgId` and `organizationId` as the organization field — apply all values, and proceed directly to Step 3.
+
+**If the user answers no** (or pastes only a partial config), ask for each still-missing field one at a time, in this order: `token`, then `boardId`, then `orgId`. Wait for the answer before asking the next.
 
 | Field | What to ask |
 |-------|-------------|
