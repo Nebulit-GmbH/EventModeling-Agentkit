@@ -57,8 +57,8 @@ cat .eventmodelers/config.json 2>/dev/null
 If the file exists and is valid JSON, extract any values **not already set by Step 0**:
 - `token` → `TOKEN`
 - `boardId` → `BOARD_ID`
-- `orgId` → `ORG_ID`
-- `baseUrl` → `BASE_URL` (default: `http://localhost:3000` if missing)
+- `organizationId` → `ORG_ID`
+- `baseUrl` → `BASE_URL` (default: `https://api.eventmodelers.de` if missing)
 
 Resolution priority: **inline param > config file > ask user**
 
@@ -69,6 +69,9 @@ If all four are present (from any source), skip to **Step 4 — Verify**.
 ## Step 2 — Ask for missing values
 
 If after Steps 0 and 1 any required field is still missing, ask the user for only what's missing. Ask all missing fields in a single message. Never ask for a value that was already provided as an inline param.
+
+Also give a hint - to get all connection values, they can  go to the boards section in the account page and copy all values with one click.
+https://app.eventmodelers.de/account
 
 | Field | What to ask |
 |-------|-------------|
