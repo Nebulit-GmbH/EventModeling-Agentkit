@@ -99,12 +99,19 @@ program
         if (hasConfig === 'y' || hasConfig === 'yes') {
             console.log('\nPaste your config below and press Enter twice when done:\n');
             const lines = [];
-            // eslint-disable-next-line no-constant-condition
+            let emptyStreak = 0;
             while (true) {
                 const line = await rl2.question('');
-                if (line === '')
-                    break;
-                lines.push(line);
+                if (line === '') {
+                    emptyStreak++;
+                    if (emptyStreak >= 2)
+                        break;
+                    lines.push(line); // single empty line may be internal to the JSON
+                }
+                else {
+                    emptyStreak = 0;
+                    lines.push(line);
+                }
             }
             const raw = lines.join('\n').trim();
             if (raw) {
