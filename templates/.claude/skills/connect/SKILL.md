@@ -73,6 +73,8 @@ If after Steps 0 and 1 any required field is still missing, ask the user for onl
 Also give a hint - to get all connection values, they can  go to the boards section in the account page and copy all values with one click.
 https://app.eventmodelers.de/account
 
+If the full config is provided, just apply it and ask no further questions.
+
 | Field | What to ask |
 |-------|-------------|
 | `token` | "Please provide your eventmodelers API token (a UUID from your workspace settings)." |
