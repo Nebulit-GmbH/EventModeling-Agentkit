@@ -95,9 +95,11 @@ program
     console.log('\n🔑 Configure credentials (from your Eventmodelers workspace settings):\n');
     const rl = createInterface({ input, output });
     let token = '';
+    let boardId = '';
     let organizationId = '';
     let baseUrl = '';
     let showOutput = true;
+    let configSaved = false;
     try {
         const configPath = join(targetDir, '.eventmodelers', 'config.json');
         let existingConfig = {};
@@ -108,32 +110,68 @@ program
             }
             catch { /* ignore */ }
         }
-        const existingToken = existingConfig.token;
-        const existingOrgId = existingConfig.organizationId;
-        const existingBaseUrl = existingConfig.baseUrl;
-        const existingShowOutput = existingConfig.showOutput;
-        token = (await rl.question(existingToken
-            ? `API token [${existingToken.slice(0, 8)}…]: `
-            : 'API token: ')) || existingToken || '';
-        organizationId = (await rl.question(existingOrgId
-            ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
-            : 'Organization ID: ')) || existingOrgId || '';
-        baseUrl = (await rl.question(`Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `)) || existingBaseUrl || 'https://api.eventmodelers.de';
-        const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
-        const showOutputAnswer = (await rl.question(`Show LLM output in terminal (true/false) [${showOutputDefault}]: `)) || String(showOutputDefault);
-        showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
+        console.log('Paste your config JSON and press Enter, or just press Enter to configure step by step:\n');
+        const jsonInput = (await rl.question('Config JSON: ')).trim();
+        if (jsonInput) {
+            try {
+                const parsed = JSON.parse(jsonInput);
+                if (typeof parsed === 'object' &&
+                    parsed !== null &&
+                    typeof parsed.token === 'string' &&
+                    typeof parsed.organizationId === 'string' &&
+                    typeof parsed.baseUrl === 'string') {
+                    token = parsed.token;
+                    organizationId = parsed.organizationId;
+                    baseUrl = parsed.baseUrl;
+                    boardId = typeof parsed.boardId === 'string' ? parsed.boardId : existingConfig.boardId || '';
+                    showOutput = typeof parsed.showOutput === 'boolean' ? parsed.showOutput : true;
+                    const configDir = join(targetDir, '.eventmodelers');
+                    mkdirSync(configDir, { recursive: true });
+                    writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2));
+                    console.log('\n  ✓ Config applied and saved to .eventmodelers/config.json');
+                    configSaved = true;
+                }
+                else {
+                    console.log('\n⚠️  JSON is not a valid config (missing token, organizationId, or baseUrl). Falling back to step-by-step.\n');
+                }
+            }
+            catch {
+                console.log('\n⚠️  Could not parse JSON. Falling back to step-by-step.\n');
+            }
+        }
+        if (!configSaved) {
+            const existingToken = existingConfig.token;
+            const existingBoardId = existingConfig.boardId;
+            const existingOrgId = existingConfig.organizationId;
+            const existingBaseUrl = existingConfig.baseUrl;
+            const existingShowOutput = existingConfig.showOutput;
+            token = (await rl.question(existingToken
+                ? `API token [${existingToken.slice(0, 8)}…]: `
+                : 'API token: ')) || existingToken || '';
+            organizationId = (await rl.question(existingOrgId
+                ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
+                : 'Organization ID: ')) || existingOrgId || '';
+            boardId = (await rl.question(existingBoardId
+                ? `Board ID [${existingBoardId.slice(0, 8)}…]: `
+                : 'Board ID (optional, press Enter to skip): ')) || existingBoardId || '';
+            baseUrl = (await rl.question(`Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `)) || existingBaseUrl || 'https://api.eventmodelers.de';
+            const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
+            const showOutputAnswer = (await rl.question(`Show LLM output in terminal (true/false) [${showOutputDefault}]: `)) || String(showOutputDefault);
+            showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
+            if (token && organizationId) {
+                const configDir = join(targetDir, '.eventmodelers');
+                mkdirSync(configDir, { recursive: true });
+                writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2));
+                console.log('  ✓ Saved .eventmodelers/config.json');
+                configSaved = true;
+            }
+            else {
+                console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
+            }
+        }
     }
     finally {
         rl.close();
-    }
-    if (token && organizationId) {
-        const configDir = join(targetDir, '.eventmodelers');
-        mkdirSync(configDir, { recursive: true });
-        writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, organizationId, baseUrl, showOutput }, null, 2));
-        console.log('  ✓ Saved .eventmodelers/config.json');
-    }
-    else {
-        console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
     }
     console.log('\n✅ Done!\n');
     console.log('Next steps — run both in separate terminals:\n');
