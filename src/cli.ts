@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { createInterface } from 'readline/promises';
-import { stdin as input, stdout as output } from 'process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {
@@ -31,7 +29,7 @@ program
 program
   .command('install')
   .description('Install agent kit into the current directory')
-  .action(async () => {
+  .action(() => {
     console.log('🚀 Eventmodelers Agent Kit\n');
 
     const targetDir = process.cwd();
@@ -109,97 +107,15 @@ program
       writeFileSync(gitignorePath, `${gitignoreEntry}\n`);
     }
 
-    // Ask for credentials
-    console.log('\n🔑 Configure credentials:\n');
-    const rl2 = createInterface({ input, output });
-    try {
-      const hasConfig = (await rl2.question(
-        'Have you already copied your config from https://app.eventmodelers.de/account? (y/n): '
-      )).trim().toLowerCase();
-
-      if (hasConfig === 'y' || hasConfig === 'yes') {
-        console.log('\nPaste your config below and press Enter twice when done:\n');
-        const lines: string[] = [];
-        let emptyStreak = 0;
-        while (true) {
-          const line = await rl2.question('');
-          if (line === '') {
-            emptyStreak++;
-            if (emptyStreak >= 2) break;
-            lines.push(line); // single empty line may be internal to the JSON
-          } else {
-            emptyStreak = 0;
-            lines.push(line);
-          }
-        }
-        const raw = lines.join('\n').trim();
-        if (raw) {
-          const configDir = join(targetDir, '.eventmodelers');
-          mkdirSync(configDir, { recursive: true });
-          writeFileSync(join(configDir, 'config.json'), raw);
-          console.log('  ✓ Config saved to .eventmodelers/config.json');
-        } else {
-          console.log('\n⚠️  Nothing pasted — config not saved.');
-        }
-      } else {
-        const configPath = join(targetDir, '.eventmodelers', 'config.json');
-        let existingConfig: Record<string, unknown> = {};
-        if (existsSync(configPath)) {
-          try {
-            existingConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
-            console.log('ℹ️  Found existing config — press Enter to keep current values.\n');
-          } catch { /* ignore */ }
-        }
-
-        const existingToken = existingConfig.token as string | undefined;
-        const existingBoardId = existingConfig.boardId as string | undefined;
-        const existingOrgId = existingConfig.organizationId as string | undefined;
-        const existingBaseUrl = existingConfig.baseUrl as string | undefined;
-        const existingShowOutput = existingConfig.showOutput as boolean | undefined;
-
-        const token = (await rl2.question(
-          existingToken
-            ? `API token [${existingToken.slice(0, 8)}…]: `
-            : 'API token: '
-        )) || existingToken || '';
-
-        const organizationId = (await rl2.question(
-          existingOrgId
-            ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
-            : 'Organization ID: '
-        )) || existingOrgId || '';
-
-        const boardId = (await rl2.question(
-          existingBoardId
-            ? `Board ID [${existingBoardId.slice(0, 8)}…]: `
-            : 'Board ID (optional, press Enter to skip): '
-        )) || existingBoardId || '';
-
-        const baseUrl = (await rl2.question(
-          `Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `
-        )) || existingBaseUrl || 'https://api.eventmodelers.de';
-
-        const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
-        const showOutputAnswer = (await rl2.question(
-          `Show LLM output in terminal (true/false) [${showOutputDefault}]: `
-        )) || String(showOutputDefault);
-        const showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
-
-        if (token && organizationId) {
-          const configDir = join(targetDir, '.eventmodelers');
-          mkdirSync(configDir, { recursive: true });
-          writeFileSync(
-            join(configDir, 'config.json'),
-            JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2)
-          );
-          console.log('  ✓ Saved .eventmodelers/config.json');
-        } else {
-          console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
-        }
-      }
-    } finally {
-      rl2.close();
+    // Create empty config file if it doesn't exist
+    const configDir = join(targetDir, '.eventmodelers');
+    const configPath = join(configDir, 'config.json');
+    mkdirSync(configDir, { recursive: true });
+    if (!existsSync(configPath)) {
+      writeFileSync(configPath, '{}');
     }
+    console.log('\n🔑 Next: add your credentials to .eventmodelers/config.json');
+    console.log('   Copy the config from https://app.eventmodelers.de/account and paste it into that file.');
 
     console.log('\n✅ Done!\n');
     console.log('Next steps — run both in separate terminals:\n');
