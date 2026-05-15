@@ -68,19 +68,23 @@ If all four are present (from any source), skip to **Step 4 — Verify**.
 
 ## Step 2 — Ask for missing values
 
-If after Steps 0 and 1 any required field is still missing, ask the user for only what's missing. Ask all missing fields in a single message. Never ask for a value that was already provided as an inline param.
+If after Steps 0 and 1 any required field is still missing, **first ask the user**:
 
-Also give a hint - to get all connection values, they can  go to the boards section in the account page and copy all values with one click.
+> "Do you have an existing config? If yes, paste it here (e.g. `{ "token": "...", "boardId": "...", "organizationId": "...", "baseUrl": "..." }`). If not, I'll ask for each value step by step."
+
+**If the user pastes a config object**, parse it immediately — accept both `orgId` and `organizationId` as the organization field — apply all values, and skip the individual field questions below. Proceed directly to Step 3.
+
+**If the user has no config** (or pastes only a partial one), ask for each still-missing field one at a time, in this order: `token`, then `boardId`, then `orgId`. Wait for the answer before asking the next.
+
+Also give a hint — to get all connection values in one click, users can go to the boards section in the account page:
 https://app.eventmodelers.de/account
-
-If the full config is provided, just apply it and ask no further questions.
 
 | Field | What to ask |
 |-------|-------------|
 | `token` | "Please provide your eventmodelers API token (a UUID from your workspace settings)." |
 | `boardId` | "Please provide the board ID you want to work with (the UUID from the board URL)." |
 | `orgId` | "Please provide your organization ID (the UUID from your organization settings)." |
-| `baseUrl` | Do **not** ask — default to `http://localhost:3000` silently. |
+| `baseUrl` | Do **not** ask — default to `https://api.eventmodelers.de` silently. |
 
 Where to find the token: users generate API tokens in their workspace settings at the eventmodelers platform. The token is shown only once at creation time. It is a UUID and must belong to the same organization as the board.
 
