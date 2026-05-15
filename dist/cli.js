@@ -19,34 +19,6 @@ program
     .action(async () => {
     console.log('🚀 Eventmodelers Agent Kit\n');
     const targetDir = process.cwd();
-    const rl = createInterface({ input, output });
-    // Check if user already has a config from the web app
-    const hasConfig = (await rl.question('Have you already copied your config from https://app.eventmodelers.de/account? (y/n): ')).trim().toLowerCase();
-    if (hasConfig === 'y' || hasConfig === 'yes') {
-        console.log('\nPaste your config below and press Enter twice when done:\n');
-        const lines = [];
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const line = await rl.question('');
-            if (line === '')
-                break;
-            lines.push(line);
-        }
-        rl.close();
-        const raw = lines.join('\n').trim();
-        if (raw) {
-            const configDir = join(targetDir, '.eventmodelers');
-            mkdirSync(configDir, { recursive: true });
-            writeFileSync(join(configDir, 'config.json'), raw);
-            console.log('\n  ✓ Config saved to .eventmodelers/config.json');
-        }
-        else {
-            console.log('\n⚠️  Nothing pasted — config not saved.');
-        }
-        console.log('\n✅ Done!\n');
-        return;
-    }
-    rl.close();
     const templatesSource = join(__dirname, '..', 'templates');
     if (!existsSync(templatesSource)) {
         console.error('❌ Templates directory not found at:', templatesSource);
@@ -120,51 +92,68 @@ program
         writeFileSync(gitignorePath, `${gitignoreEntry}\n`);
     }
     // Ask for credentials
-    console.log('\n🔑 Configure credentials (from your Eventmodelers workspace settings):\n');
+    console.log('\n🔑 Configure credentials:\n');
     const rl2 = createInterface({ input, output });
-    let token = '';
-    let boardId = '';
-    let organizationId = '';
-    let baseUrl = '';
-    let showOutput = true;
-    let configSaved = false;
     try {
-        const configPath = join(targetDir, '.eventmodelers', 'config.json');
-        let existingConfig = {};
-        if (existsSync(configPath)) {
-            try {
-                existingConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
-                console.log('ℹ️  Found existing config — press Enter to keep current values.\n');
+        const hasConfig = (await rl2.question('Have you already copied your config from https://app.eventmodelers.de/account? (y/n): ')).trim().toLowerCase();
+        if (hasConfig === 'y' || hasConfig === 'yes') {
+            console.log('\nPaste your config below and press Enter twice when done:\n');
+            const lines = [];
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                const line = await rl2.question('');
+                if (line === '')
+                    break;
+                lines.push(line);
             }
-            catch { /* ignore */ }
-        }
-        const existingToken = existingConfig.token;
-        const existingBoardId = existingConfig.boardId;
-        const existingOrgId = existingConfig.organizationId;
-        const existingBaseUrl = existingConfig.baseUrl;
-        const existingShowOutput = existingConfig.showOutput;
-        token = (await rl2.question(existingToken
-            ? `API token [${existingToken.slice(0, 8)}…]: `
-            : 'API token: ')) || existingToken || '';
-        organizationId = (await rl2.question(existingOrgId
-            ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
-            : 'Organization ID: ')) || existingOrgId || '';
-        boardId = (await rl2.question(existingBoardId
-            ? `Board ID [${existingBoardId.slice(0, 8)}…]: `
-            : 'Board ID (optional, press Enter to skip): ')) || existingBoardId || '';
-        baseUrl = (await rl2.question(`Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `)) || existingBaseUrl || 'https://api.eventmodelers.de';
-        const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
-        const showOutputAnswer = (await rl2.question(`Show LLM output in terminal (true/false) [${showOutputDefault}]: `)) || String(showOutputDefault);
-        showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
-        if (token && organizationId) {
-            const configDir = join(targetDir, '.eventmodelers');
-            mkdirSync(configDir, { recursive: true });
-            writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2));
-            console.log('  ✓ Saved .eventmodelers/config.json');
-            configSaved = true;
+            const raw = lines.join('\n').trim();
+            if (raw) {
+                const configDir = join(targetDir, '.eventmodelers');
+                mkdirSync(configDir, { recursive: true });
+                writeFileSync(join(configDir, 'config.json'), raw);
+                console.log('  ✓ Config saved to .eventmodelers/config.json');
+            }
+            else {
+                console.log('\n⚠️  Nothing pasted — config not saved.');
+            }
         }
         else {
-            console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
+            const configPath = join(targetDir, '.eventmodelers', 'config.json');
+            let existingConfig = {};
+            if (existsSync(configPath)) {
+                try {
+                    existingConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+                    console.log('ℹ️  Found existing config — press Enter to keep current values.\n');
+                }
+                catch { /* ignore */ }
+            }
+            const existingToken = existingConfig.token;
+            const existingBoardId = existingConfig.boardId;
+            const existingOrgId = existingConfig.organizationId;
+            const existingBaseUrl = existingConfig.baseUrl;
+            const existingShowOutput = existingConfig.showOutput;
+            const token = (await rl2.question(existingToken
+                ? `API token [${existingToken.slice(0, 8)}…]: `
+                : 'API token: ')) || existingToken || '';
+            const organizationId = (await rl2.question(existingOrgId
+                ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
+                : 'Organization ID: ')) || existingOrgId || '';
+            const boardId = (await rl2.question(existingBoardId
+                ? `Board ID [${existingBoardId.slice(0, 8)}…]: `
+                : 'Board ID (optional, press Enter to skip): ')) || existingBoardId || '';
+            const baseUrl = (await rl2.question(`Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `)) || existingBaseUrl || 'https://api.eventmodelers.de';
+            const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
+            const showOutputAnswer = (await rl2.question(`Show LLM output in terminal (true/false) [${showOutputDefault}]: `)) || String(showOutputDefault);
+            const showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
+            if (token && organizationId) {
+                const configDir = join(targetDir, '.eventmodelers');
+                mkdirSync(configDir, { recursive: true });
+                writeFileSync(join(configDir, 'config.json'), JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2));
+                console.log('  ✓ Saved .eventmodelers/config.json');
+            }
+            else {
+                console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
+            }
         }
     }
     finally {
