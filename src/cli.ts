@@ -35,6 +35,38 @@ program
     console.log('🚀 Eventmodelers Agent Kit\n');
 
     const targetDir = process.cwd();
+    const rl = createInterface({ input, output });
+
+    // Check if user already has a config from the web app
+    const hasConfig = (await rl.question(
+      'Have you already copied your config from https://app.eventmodelers.de/account? (y/n): '
+    )).trim().toLowerCase();
+
+    if (hasConfig === 'y' || hasConfig === 'yes') {
+      console.log('\nPaste your config below and press Enter twice when done:\n');
+      const lines: string[] = [];
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const line = await rl.question('');
+        if (line === '') break;
+        lines.push(line);
+      }
+      rl.close();
+      const raw = lines.join('\n').trim();
+      if (raw) {
+        const configDir = join(targetDir, '.eventmodelers');
+        mkdirSync(configDir, { recursive: true });
+        writeFileSync(join(configDir, 'config.json'), raw);
+        console.log('\n  ✓ Config saved to .eventmodelers/config.json');
+      } else {
+        console.log('\n⚠️  Nothing pasted — config not saved.');
+      }
+      console.log('\n✅ Done!\n');
+      return;
+    }
+
+    rl.close();
+
     const templatesSource = join(__dirname, '..', 'templates');
 
     if (!existsSync(templatesSource)) {
@@ -110,7 +142,7 @@ program
 
     // Ask for credentials
     console.log('\n🔑 Configure credentials (from your Eventmodelers workspace settings):\n');
-    const rl = createInterface({ input, output });
+    const rl2 = createInterface({ input, output });
     let token = '';
     let boardId = '';
     let organizationId = '';
@@ -128,105 +160,54 @@ program
         } catch { /* ignore */ }
       }
 
-      console.log('Paste your config JSON or just press Enter to configure step by step:\n');
+      const existingToken = existingConfig.token as string | undefined;
+      const existingBoardId = existingConfig.boardId as string | undefined;
+      const existingOrgId = existingConfig.organizationId as string | undefined;
+      const existingBaseUrl = existingConfig.baseUrl as string | undefined;
+      const existingShowOutput = existingConfig.showOutput as boolean | undefined;
 
-      const jsonLines: string[] = [];
-      const firstLine = (await rl.question('Config JSON: ')).trim();
-      if (firstLine) {
-        jsonLines.push(firstLine);
-        let valid = false;
-        try { JSON.parse(jsonLines.join('')); valid = true; } catch { /* accumulate */ }
-        while (!valid) {
-          const nextLine = (await rl.question('')).trim();
-          if (!nextLine) break;
-          jsonLines.push(nextLine);
-          try { JSON.parse(jsonLines.join('')); valid = true; } catch { /* accumulate */ }
-        }
-      }
-      const jsonInput = jsonLines.join('').trim();
+      token = (await rl2.question(
+        existingToken
+          ? `API token [${existingToken.slice(0, 8)}…]: `
+          : 'API token: '
+      )) || existingToken || '';
 
-      if (jsonInput) {
-        try {
-          const parsed = JSON.parse(jsonInput);
-          if (
-            typeof parsed === 'object' &&
-            parsed !== null &&
-            typeof parsed.token === 'string' &&
-            typeof parsed.organizationId === 'string' &&
-            typeof parsed.baseUrl === 'string'
-          ) {
-            token = parsed.token;
-            organizationId = parsed.organizationId;
-            baseUrl = parsed.baseUrl;
-            boardId = typeof parsed.boardId === 'string' ? parsed.boardId : (existingConfig.boardId as string | undefined) || '';
-            showOutput = typeof parsed.showOutput === 'boolean' ? parsed.showOutput : true;
+      organizationId = (await rl2.question(
+        existingOrgId
+          ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
+          : 'Organization ID: '
+      )) || existingOrgId || '';
 
-            const configDir = join(targetDir, '.eventmodelers');
-            mkdirSync(configDir, { recursive: true });
-            writeFileSync(
-              join(configDir, 'config.json'),
-              JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2)
-            );
-            console.log('\n  ✓ Config applied and saved to .eventmodelers/config.json');
-            configSaved = true;
-          } else {
-            console.log('\n⚠️  JSON is not a valid config (missing token, organizationId, or baseUrl). Falling back to step-by-step.\n');
-          }
-        } catch {
-          console.log('\n⚠️  Could not parse JSON. Falling back to step-by-step.\n');
-        }
-      }
+      boardId = (await rl2.question(
+        existingBoardId
+          ? `Board ID [${existingBoardId.slice(0, 8)}…]: `
+          : 'Board ID (optional, press Enter to skip): '
+      )) || existingBoardId || '';
 
-      if (!configSaved) {
-        const existingToken = existingConfig.token as string | undefined;
-        const existingBoardId = existingConfig.boardId as string | undefined;
-        const existingOrgId = existingConfig.organizationId as string | undefined;
-        const existingBaseUrl = existingConfig.baseUrl as string | undefined;
-        const existingShowOutput = existingConfig.showOutput as boolean | undefined;
+      baseUrl = (await rl2.question(
+        `Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `
+      )) || existingBaseUrl || 'https://api.eventmodelers.de';
 
-        token = (await rl.question(
-          existingToken
-            ? `API token [${existingToken.slice(0, 8)}…]: `
-            : 'API token: '
-        )) || existingToken || '';
+      const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
+      const showOutputAnswer = (await rl2.question(
+        `Show LLM output in terminal (true/false) [${showOutputDefault}]: `
+      )) || String(showOutputDefault);
+      showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
 
-        organizationId = (await rl.question(
-          existingOrgId
-            ? `Organization ID [${existingOrgId.slice(0, 8)}…]: `
-            : 'Organization ID: '
-        )) || existingOrgId || '';
-
-        boardId = (await rl.question(
-          existingBoardId
-            ? `Board ID [${existingBoardId.slice(0, 8)}…]: `
-            : 'Board ID (optional, press Enter to skip): '
-        )) || existingBoardId || '';
-
-        baseUrl = (await rl.question(
-          `Base URL [${existingBaseUrl || 'https://api.eventmodelers.de'}]: `
-        )) || existingBaseUrl || 'https://api.eventmodelers.de';
-
-        const showOutputDefault = existingShowOutput !== undefined ? existingShowOutput : true;
-        const showOutputAnswer = (await rl.question(
-          `Show LLM output in terminal (true/false) [${showOutputDefault}]: `
-        )) || String(showOutputDefault);
-        showOutput = showOutputAnswer.trim().toLowerCase() !== 'false';
-
-        if (token && organizationId) {
-          const configDir = join(targetDir, '.eventmodelers');
-          mkdirSync(configDir, { recursive: true });
-          writeFileSync(
-            join(configDir, 'config.json'),
-            JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2)
-          );
-          console.log('  ✓ Saved .eventmodelers/config.json');
-          configSaved = true;
-        } else {
-          console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
-        }
+      if (token && organizationId) {
+        const configDir = join(targetDir, '.eventmodelers');
+        mkdirSync(configDir, { recursive: true });
+        writeFileSync(
+          join(configDir, 'config.json'),
+          JSON.stringify({ token, boardId, organizationId, baseUrl, showOutput }, null, 2)
+        );
+        console.log('  ✓ Saved .eventmodelers/config.json');
+        configSaved = true;
+      } else {
+        console.log('\n⚠️  Skipped credentials. Run the install again to set them when ready.');
       }
     } finally {
-      rl.close();
+      rl2.close();
     }
 
     console.log('\n✅ Done!\n');
