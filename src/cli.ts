@@ -128,8 +128,22 @@ program
         } catch { /* ignore */ }
       }
 
-      console.log('Paste your config JSON and press Enter, or just press Enter to configure step by step:\n');
-      const jsonInput = (await rl.question('Config JSON: ')).trim();
+      console.log('Paste your config JSON or just press Enter to configure step by step:\n');
+
+      const jsonLines: string[] = [];
+      const firstLine = (await rl.question('Config JSON: ')).trim();
+      if (firstLine) {
+        jsonLines.push(firstLine);
+        let valid = false;
+        try { JSON.parse(jsonLines.join('')); valid = true; } catch { /* accumulate */ }
+        while (!valid) {
+          const nextLine = (await rl.question('')).trim();
+          if (!nextLine) break;
+          jsonLines.push(nextLine);
+          try { JSON.parse(jsonLines.join('')); valid = true; } catch { /* accumulate */ }
+        }
+      }
+      const jsonInput = jsonLines.join('').trim();
 
       if (jsonInput) {
         try {
