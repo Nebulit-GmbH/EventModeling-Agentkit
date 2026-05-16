@@ -70,6 +70,7 @@ curl -s -X POST "<BASE_URL>/api/org/<ORG_ID>/boards/<BOARD_ID>/nodes/events" \
   -H "x-board-id: <BOARD_ID>" \
   -H "x-user-id: update-slice-status-skill" \
   -d '[{
+    "id": "<new-random-uuid>",
     "eventType": "node:changed",
     "nodeId": "<SLICE_NODE_ID>",
     "boardId": "<BOARD_ID>",
