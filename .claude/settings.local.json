@@ -7,7 +7,8 @@
       "Bash(rm -f /Users/martindilger/development/git/sources/eventmodelers-kit/tsconfig.json)",
       "Bash(rm -f /Users/martindilger/development/git/sources/eventmodelers-kit/templates/realtime-agent/tsconfig.json)",
       "Bash(rm -f /Users/martindilger/development/git/sources/eventmodelers-kit/templates/realtime-agent/src/index.ts)",
-      "Bash(chmod +x /Users/martindilger/development/git/sources/eventmodelers-kit/cli.js)"
+      "Bash(chmod +x /Users/martindilger/development/git/sources/eventmodelers-kit/cli.js)",
+      "Bash(xargs -I{} git show {}:templates/realtime-agent/src/index.js)"
     ]
   }
 }

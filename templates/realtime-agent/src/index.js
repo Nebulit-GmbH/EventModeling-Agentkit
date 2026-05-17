@@ -51,7 +51,7 @@ async function fetchPlatformConfig(local) {
 }
 
 async function getRealtimeToken(cfg) {
-  const res = await fetch(`${cfg.baseUrl}/api/prompts/realtime-token`, {
+  const res = await fetch(`${cfg.baseUrl}/api/org/${cfg.organizationId}/prompts/realtime-token`, {
     headers: { 'x-token': cfg.token },
   });
   if (!res.ok) throw new Error(`Failed to get realtime token: ${res.status} / ${res.statusText} / ${await res.text()}`);
@@ -60,7 +60,7 @@ async function getRealtimeToken(cfg) {
 }
 
 async function fetchNextPrompt(cfg, jwtToken) {
-  const res = await fetch(`${cfg.baseUrl}/api/prompts/next`, {
+  const res = await fetch(`${cfg.baseUrl}/api/org/${cfg.organizationId}/prompts/next`, {
     headers: { 'x-token': cfg.token, 'Authorization': `Bearer ${jwtToken}` },
   });
   if (res.status === 404) return null;
