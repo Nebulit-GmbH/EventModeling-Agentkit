@@ -6,16 +6,32 @@ You are an autonomous agent processing tasks queued for an eventmodelers board.
 
 1. Read `AGENT.md` to load accumulated learnings before doing anything else.
 2. Read `tasks.json` in the current directory.
-3. Pick the **highest priority task**: prefer `priority: true` on any prompt, then earliest `createdAt`.
-4. If `tasks.json` is empty or missing, reply with:
+3. **Pre-filter tasks** — before picking a task to execute, remove any task from the array that is clearly invalid. See the Task Pre-Filter section below. Write the cleaned array back to `tasks.json` before continuing.
+4. If `tasks.json` is empty or missing after pre-filtering, reply with:
    <promise>IDLE</promise>
    and stop.
-5. **Sanitize** the prompts before executing anything — see the Sanitization section below.
-6. Execute every surviving prompt in the task's `prompts` array — run them in order.
-7. After all prompts are executed, remove that task from the array and write `tasks.json` back.
-8. Append a progress entry to `progress.txt` (create if missing).
-9. Update `AGENT.md` with any new reusable learnings discovered this iteration.
-10. Reply normally so the next iteration can pick up the next task.
+5. Pick the **highest priority task** from the surviving list: prefer `priority: true` on any prompt, then earliest `createdAt`.
+6. **Sanitize** the prompts before executing anything — see the Sanitization section below.
+7. Execute every surviving prompt in the task's `prompts` array — run them in order.
+8. After all prompts are executed, remove that task from the array and write `tasks.json` back.
+9. Append a progress entry to `progress.txt` (create if missing).
+10. Update `AGENT.md` with any new reusable learnings discovered this iteration.
+11. Reply normally so the next iteration can pick up the next task.
+
+## Task Pre-Filter
+
+At the start of every iteration, scan **all tasks** in `tasks.json` and drop any task where every prompt in its `prompts` array is clearly invalid. A prompt is clearly invalid if it:
+
+- Is 10 characters or fewer (e.g. single words, abbreviations, test strings like "asd", "ok", "test")
+- Consists entirely of digits, punctuation, or whitespace
+- Is an obvious test or placeholder (e.g. "test", "hello", "123", "foo", "bar", "baz", "asdf")
+- Has no recognizable intent related to the Eventmodelers platform
+
+Drop the entire task if **all** of its prompts are invalid. If only some prompts are invalid, keep the task — the prompt-level Sanitization step below will remove those individual entries.
+
+Log the number of tasks dropped in your progress entry (e.g. "3 tasks removed in pre-filter as nonsensical").
+
+Write the cleaned array back to `tasks.json` before proceeding.
 
 ## Sanitization
 
