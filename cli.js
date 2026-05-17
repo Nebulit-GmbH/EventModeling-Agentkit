@@ -15,9 +15,20 @@ import {
   appendFileSync,
 } from 'fs';
 import { execSync } from 'child_process';
+import { createInterface } from 'readline';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+async function prompt(question) {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
 
 const program = new Command();
 
@@ -29,25 +40,22 @@ program
 program
   .command('install')
   .description('Install agent kit into the current directory')
-  .action(() => {
+  .action(async () => {
     console.log('🚀 Eventmodelers Agent Kit\n');
 
     const targetDir = process.cwd();
-
-    const templatesSource = join(__dirname, '..', 'templates');
+    const templatesSource = join(__dirname, 'templates');
 
     if (!existsSync(templatesSource)) {
       console.error('❌ Templates directory not found at:', templatesSource);
       process.exit(1);
     }
 
-    // Copy template files first — credentials not required for this
     console.log('📦 Installing files...\n');
     const items = readdirSync(templatesSource);
     for (const item of items) {
       const sourcePath = join(templatesSource, item);
 
-      // templates/root/ contents are spread directly into the project root
       if (item === 'root' && statSync(sourcePath).isDirectory()) {
         const rootItems = readdirSync(sourcePath);
         for (const rootItem of rootItems) {
@@ -60,7 +68,7 @@ program
               cpSync(rootSourcePath, rootTargetPath);
             }
             console.log(`  ✓ Installed ${rootItem}`);
-          } catch (err: any) {
+          } catch (err) {
             console.error(`  ❌ Failed to copy ${rootItem}:`, err?.message);
           }
         }
@@ -78,12 +86,11 @@ program
           cpSync(sourcePath, targetPath);
         }
         console.log(`  ✓ Installed ${item}`);
-      } catch (err: any) {
+      } catch (err) {
         console.error(`  ❌ Failed to copy ${item}:`, err?.message);
       }
     }
 
-    // Install realtime-agent dependencies
     const agentDir = join(targetDir, 'realtime-agent');
     if (existsSync(agentDir)) {
       console.log('\n📦 Installing realtime-agent dependencies...');
@@ -95,7 +102,6 @@ program
       }
     }
 
-    // Add .eventmodelers/ to .gitignore
     const gitignorePath = join(targetDir, '.gitignore');
     const gitignoreEntry = '.eventmodelers/';
     if (existsSync(gitignorePath)) {
@@ -107,15 +113,58 @@ program
       writeFileSync(gitignorePath, `${gitignoreEntry}\n`);
     }
 
-    // Create empty config file if it doesn't exist
     const configDir = join(targetDir, '.eventmodelers');
     const configPath = join(configDir, 'config.json');
     mkdirSync(configDir, { recursive: true });
-    if (!existsSync(configPath)) {
-      writeFileSync(configPath, '{}');
+
+    const hasExisting = await prompt('\nDo you have an existing config from app.eventmodelers.de/account? (y/n): ');
+    if (hasExisting.toLowerCase() === 'y' || hasExisting.toLowerCase() === 'yes') {
+      console.log(`\n  Paste your config into:\n\n    ${configPath}\n\n  Then re-run this installer.\n`);
+      process.exit(0);
     }
-    console.log('\n🔑 Next: add your credentials to .eventmodelers/config.json');
-    console.log('   Copy the config from https://app.eventmodelers.de/account and paste it into that file.');
+
+    let config = {};
+    if (existsSync(configPath)) {
+      try {
+        config = JSON.parse(readFileSync(configPath, 'utf-8'));
+      } catch {
+        config = {};
+      }
+    }
+
+    const hasConfig = config['organizationId'] && config['token'];
+    if (!hasConfig) {
+      console.log('\n🔑 Enter your Eventmodelers credentials:\n');
+      config['organizationId'] = config['organizationId'] || await prompt('  Organization ID: ');
+      config['token']          = config['token']          || await prompt('  Token:           ');
+      writeFileSync(configPath, JSON.stringify(config, null, 2));
+      console.log('\n  ✓ Credentials saved to .eventmodelers/config.json');
+    } else {
+      console.log('\n  ✓ Config already present — skipping credential prompt');
+    }
+
+    const claudeDir = join(targetDir, '.claude');
+    const settingsPath = join(claudeDir, 'settings.json');
+    mkdirSync(claudeDir, { recursive: true });
+
+    let settings = {};
+    if (existsSync(settingsPath)) {
+      try {
+        settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+      } catch {
+        settings = {};
+      }
+    }
+
+    const baseUrl = config['baseUrl'] || 'https://api.eventmodelers.de';
+    settings['mcpServers'] = settings['mcpServers'] || {};
+    settings['mcpServers']['eventmodelers'] = {
+      type: 'http',
+      url: `${baseUrl}/mcp`,
+    };
+
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    console.log('  ✓ MCP server configured in .claude/settings.json');
 
     console.log('\n✅ Done!\n');
     console.log('Next steps — run both in separate terminals:\n');
@@ -151,8 +200,7 @@ program
   .command('status')
   .description('Check installation status')
   .action(() => {
-    const skillsDir
-        = join(process.cwd(), '.claude', 'skills');
+    const skillsDir = join(process.cwd(), '.claude', 'skills');
     const configPath = join(process.cwd(), '.eventmodelers', 'config.json');
     const agentDir = join(process.cwd(), 'realtime-agent');
 

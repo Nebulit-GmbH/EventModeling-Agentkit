@@ -1,67 +1,76 @@
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { readFileSync, existsSync } from 'fs';
+import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { writeTask, Prompt } from './agentCall.js';
+import { writeTask } from './agentCall.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-interface LocalConfig {
-  token: string;
-  organizationId: string;
-  baseUrl: string;
+function findRalphShDir(startDir) {
+  let dir = startDir;
+  while (true) {
+    if (existsSync(join(dir, 'ralph.sh'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
 }
 
-interface PlatformConfig extends LocalConfig {
-  supabaseUrl: string;
-  supabaseAnonKey: string;
+function findConfigPath(startDir) {
+  let dir = startDir;
+  while (true) {
+    const candidate = join(dir, '.eventmodelers', 'config.json');
+    if (existsSync(candidate)) return candidate;
+    const parent = dirname(dir);
+    if (parent === dir) throw new Error('No .eventmodelers/config.json found in current directory or any parent directory');
+    dir = parent;
+  }
 }
 
-function loadLocalConfig(): LocalConfig {
-  // Look for config in the project root (two levels up from src/)
-  const configPath = resolve(__dirname, '../../.eventmodelers/config.json');
+function loadLocalConfig() {
+  const configPath = findConfigPath(process.cwd());
   const raw = readFileSync(configPath, 'utf-8');
-  const cfg = JSON.parse(raw) as Partial<LocalConfig>;
+  const cfg = JSON.parse(raw);
 
-  for (const key of ['token', 'organizationId', 'baseUrl'] as const) {
+  for (const key of ['token', 'organizationId', 'baseUrl']) {
     if (!cfg[key]) throw new Error(`Missing config field: ${key}`);
   }
 
   if (process.env.BASE_URL) cfg.baseUrl = process.env.BASE_URL;
 
-  return cfg as LocalConfig;
+  return cfg;
 }
 
-async function fetchPlatformConfig(local: LocalConfig): Promise<PlatformConfig> {
+async function fetchPlatformConfig(local) {
   const res = await fetch(`${local.baseUrl}/api/config`, {
     headers: { 'x-token': local.token },
   });
   if (!res.ok) throw new Error(`Failed to fetch platform config: ${res.status} / ${res.statusText} / ${await res.text()}`);
-  const remote = await res.json() as { supabaseUrl: string; supabaseAnonKey: string };
+  const remote = await res.json();
   return { ...local, ...remote };
 }
 
-async function getRealtimeToken(cfg: PlatformConfig): Promise<string> {
+async function getRealtimeToken(cfg) {
   const res = await fetch(`${cfg.baseUrl}/api/prompts/realtime-token`, {
     headers: { 'x-token': cfg.token },
   });
   if (!res.ok) throw new Error(`Failed to get realtime token: ${res.status} / ${res.statusText} / ${await res.text()}`);
-  const { token } = await res.json() as { token: string };
+  const { token } = await res.json();
   return token;
 }
 
-async function fetchNextPrompt(cfg: PlatformConfig, jwtToken: string): Promise<Prompt | null> {
+async function fetchNextPrompt(cfg, jwtToken) {
   const res = await fetch(`${cfg.baseUrl}/api/prompts/next`, {
     headers: { 'x-token': cfg.token, 'Authorization': `Bearer ${jwtToken}` },
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Failed to fetch prompt: ${res.status} / ${res.statusText} / ${await res.text()}`);
-  return res.json() as Promise<Prompt>;
+  return res.json();
 }
 
-async function drainQueue(cfg: PlatformConfig, jwtToken: string, claudeCwd: string): Promise<void> {
-  const prompts: Prompt[] = [];
-  let prompt: Prompt | null;
+async function drainQueue(cfg, jwtToken, claudeCwd) {
+  const prompts = [];
+  let prompt;
 
   while ((prompt = await fetchNextPrompt(cfg, jwtToken)) !== null) {
     console.log(`[agent] Queuing prompt "${prompt.prompt}" (board=${prompt.board_id}, priority=${prompt.priority})`);
@@ -73,8 +82,8 @@ async function drainQueue(cfg: PlatformConfig, jwtToken: string, claudeCwd: stri
   }
 }
 
-async function start(): Promise<void> {
-  const claudeCwd = process.argv[2] ?? resolve(process.cwd(), '..');
+async function start() {
+  const claudeCwd = process.argv[2] ?? findRalphShDir(process.cwd()) ?? resolve(process.cwd(), '.');
 
   const local = loadLocalConfig();
   const cfg = await fetchPlatformConfig(local);

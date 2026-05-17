@@ -4,16 +4,11 @@
   "description": "Real-time Claude agent + skill kit for the Eventmodelers platform",
   "type": "module",
   "bin": {
-    "eventmodelers": "dist/cli.js",
-    "agent-kit": "dist/cli.js"
-  },
-  "scripts": {
-    "build": "tsc && chmod +x dist/cli.js",
-    "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "eventmodelers": "cli.js",
+    "agent-kit": "cli.js"
   },
   "files": [
-    "dist",
+    "cli.js",
     "templates",
     "README.md"
   ],
@@ -33,10 +28,6 @@
   },
   "dependencies": {
     "commander": "^12.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0"

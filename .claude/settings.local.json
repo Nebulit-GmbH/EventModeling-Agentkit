@@ -1,10 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs ls -lh)",
-      "Bash(grep -E \"\\\\.\\(md|ts|js|json\\)$\")",
-      "Bash(chmod +x *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(rm -rf /Users/martindilger/development/git/sources/eventmodelers-kit/dist)",
+      "Bash(rm -rf /Users/martindilger/development/git/sources/eventmodelers-kit/src)",
+      "Bash(rm -f /Users/martindilger/development/git/sources/eventmodelers-kit/tsconfig.json)",
+      "Bash(rm -f /Users/martindilger/development/git/sources/eventmodelers-kit/templates/realtime-agent/tsconfig.json)",
+      "Bash(rm -f /Users/martindilger/development/git/sources/eventmodelers-kit/templates/realtime-agent/src/index.ts)",
+      "Bash(chmod +x /Users/martindilger/development/git/sources/eventmodelers-kit/cli.js)"
     ]
   }
 }
